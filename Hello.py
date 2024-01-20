@@ -95,7 +95,7 @@ def oauth_google():
             st.session_state["token"] = result["token"]
             st.rerun()
     else:
-        st.write("You are logged in!")
+        st.write("You are logged in with google!")
 
 def oauth_notion():
     NOTION_OAUTH2_CLIENT_ID = st.secrets["NOTION_OAUTH2_CLIENT_ID"]
@@ -179,10 +179,10 @@ def oauth_notion():
             st.session_state["notion_token"] = result
             st.rerun()
     else:
-        st.write("You are logged in!")
-        st.write(st.session_state["notion_token"])
-        st.button("Logout")
-        del st.session_state["notion_token"]
+        st.write("You are logged in with notion!")
+        # st.write(st.session_state["notion_token"])
+        # st.button("Logout")
+        # del st.session_state["notion_token"]
         
 if __name__ == "__main__":
     oauth_google()
