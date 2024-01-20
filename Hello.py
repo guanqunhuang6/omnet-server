@@ -14,6 +14,8 @@
 
 import streamlit as st
 from streamlit.logger import get_logger
+from httpx_oauth.oauth2 import BaseOAuth2
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 LOGGER = get_logger(__name__)
 
@@ -51,13 +53,13 @@ import os
 import base64
 import json
 
-def run():
+def oauth_google():
     st.set_page_config(
         page_title="omnet",
         page_icon=":robot:",
     )
-    st.title("Google Gmail Example")
-    st.write("This example shows how to use the OAuth2 component to authenticate with Google Gmail API.")
+    st.title("Google Gmail Oauth2")
+    # st.write("This example shows how to use the OAuth2 component to authenticate with Google Gmail API.")
     CLIENT_ID = st.secrets["G_CLIENT_ID"]
     CLIENT_SECRET = st.secrets["G_CLIENT_SECRET"]
     AUTHORIZE_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth"
@@ -95,5 +97,93 @@ def run():
     else:
         st.write("You are logged in!")
 
+def oauth_notion():
+    NOTION_OAUTH2_CLIENT_ID = st.secrets["NOTION_OAUTH2_CLIENT_ID"]
+    NOTION_OAUTH2_CLIENT_SECRET = st.secrets["NOTION_OAUTH2_CLIENT_SECRET"]
+    NOTION_OAUTH2_AUTHORIZATION_URL = "https://api.notion.com/v1/oauth/authorize"
+    # NOTION_OAUTH2_AUTHORIZATION_URL = "https://api.notion.com/v1/oauth/authorize?client_id=6c404a6b-7239-4c4d-b0b0-419109232c69&response_type=code&owner=user&redirect_uri=https%3A%2F%2Fomnet.life%2Fnotion%2Fcallback"
+    NOTION_OAUTH2_TOKEN_URL = "https://api.notion.com/v1/oauth/token"
+
+
+    class NotionOAuth2(BaseOAuth2):
+        def __init__(
+            self,
+            client_id: str,
+            client_secret: str,
+            **kwargs: Any,
+        ) -> None:
+            super().__init__(
+                client_id,
+                client_secret,
+                NOTION_OAUTH2_AUTHORIZATION_URL,
+                NOTION_OAUTH2_TOKEN_URL,
+                NOTION_OAUTH2_TOKEN_URL,
+                NOTION_OAUTH2_TOKEN_URL,
+                **kwargs,
+            )
+
+        # override get_access_token to use Notion's custom OAuth2 flow
+        async def get_access_token(
+            self, code: str, redirect_uri: Optional[str] = None
+        ) -> Dict[str, Any]:
+            async with self.get_httpx_client() as client:
+                data = {
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": redirect_uri,
+                }
+                basic_auth = self.client_id + ":" + self.client_secret
+                # base64 encode the basic auth string
+                basic_auth = base64.b64encode(basic_auth.encode("ascii")).decode("ascii")
+                headers = {
+                    "Authorization": f"Basic {basic_auth}",
+                    "Content-Type": "application/json",
+                }
+                response = await client.post(self.access_token_endpoint, headers=headers, json=data, timeout=30) 
+                if response.status_code != 200:
+                    raise Exception(response.text)
+                response.raise_for_status()
+                return cast(Dict[str, Any], response.json())
+
+    st.title("Notion OAuth2")
+
+    notion_client = NotionOAuth2(NOTION_OAUTH2_CLIENT_ID, NOTION_OAUTH2_CLIENT_SECRET)
+
+    # create an OAuth2Component instance
+    oauth2 = OAuth2Component(
+        # client_id=None,
+        # client_secret=None,
+        # authorize_endpoint=None,
+        # token_endpoint=None,
+        # refresh_token_endpoint=None,
+        # revoke_token_endpoint=None,
+        client=notion_client,
+    )
+
+
+    if "notion_token" not in st.session_state:
+        
+        # create a button to start the OAuth2 flow
+        result = oauth2.authorize_button(
+            name="Login with Notion",
+            icon="https://www.notion.so/images/favicon.ico",
+            # redirect_uri="http://localhost:8501",
+            redirect_uri="https://omnet-server-aw0qwg29mdv.streamlit.app/",
+            scope="user",
+            key="notion",
+            extras_params={"owner": "user"},
+            use_container_width=True,
+        )
+
+        if result:
+            st.session_state["notion_token"] = result
+            st.rerun()
+    else:
+        st.write("You are logged in!")
+        st.write(st.session_state["notion_token"])
+        st.button("Logout")
+        del st.session_state["notion_token"]
+        
 if __name__ == "__main__":
-    run()
+    oauth_google()
+    oauth_notion()
