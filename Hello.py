@@ -68,8 +68,8 @@ def oauth_google():
     
     if "auth" not in st.session_state:
         # create a button to start the OAuth2 flow
-        oauth2 = OAuth2Component(CLIENT_ID, CLIENT_SECRET, AUTHORIZE_ENDPOINT, TOKEN_ENDPOINT, TOKEN_ENDPOINT, REVOKE_ENDPOINT)
-        result = oauth2.authorize_button(
+        google_oauth2 = OAuth2Component(CLIENT_ID, CLIENT_SECRET, AUTHORIZE_ENDPOINT, TOKEN_ENDPOINT, TOKEN_ENDPOINT, REVOKE_ENDPOINT)
+        googlde_result = google_oauth2.authorize_button(
             name="Continue with Google",
             icon="https://www.google.com.tw/favicon.ico",
             # redirect_uri="http://192.168.1.184:8501",
@@ -81,10 +81,10 @@ def oauth_google():
             use_container_width=True,
         )
 
-        if result:
-            st.write(result)
+        if googlde_result:
+            st.write(googlde_result)
             # decode the id_token jwt and get the user's email address
-            id_token = result["token"]["id_token"]
+            id_token = googlde_result["token"]["id_token"]
             # verify the signature is an optional step for security
             payload = id_token.split(".")[1]
             # add padding to the payload if needed
@@ -92,7 +92,7 @@ def oauth_google():
             payload = json.loads(base64.b64decode(payload))
             email = payload["email"]
             st.session_state["auth"] = email
-            st.session_state["token"] = result["token"]
+            st.session_state["token"] = googlde_result["token"]
             st.rerun()
     else:
         st.write("You are logged in with google!")
@@ -150,7 +150,7 @@ def oauth_notion():
     notion_client = NotionOAuth2(NOTION_OAUTH2_CLIENT_ID, NOTION_OAUTH2_CLIENT_SECRET)
 
     # create an OAuth2Component instance
-    oauth2 = OAuth2Component(
+    notion_oauth2 = OAuth2Component(
         # client_id=None,
         # client_secret=None,
         # authorize_endpoint=None,
@@ -164,7 +164,7 @@ def oauth_notion():
     if "notion_token" not in st.session_state:
         
         # create a button to start the OAuth2 flow
-        result = oauth2.authorize_button(
+        notion_result = notion_oauth2.authorize_button(
             name="Login with Notion",
             icon="https://www.notion.so/images/favicon.ico",
             # redirect_uri="http://localhost:8501",
@@ -175,8 +175,8 @@ def oauth_notion():
             use_container_width=True,
         )
 
-        if result:
-            st.session_state["notion_token"] = result
+        if notion_result:
+            st.session_state["notion_token"] = notion_result
             st.rerun()
     else:
         st.write("You are logged in with notion!")
