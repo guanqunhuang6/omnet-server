@@ -6,3 +6,4 @@ streamlit
 streamlit_oauth
 httpx_oauth
 extra_streamlit_components
+notion_client
