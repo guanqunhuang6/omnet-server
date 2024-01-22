@@ -5,3 +5,4 @@ pydeck
 streamlit
 streamlit_oauth
 httpx_oauth
+extra_streamlit_components

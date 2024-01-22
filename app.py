@@ -69,6 +69,7 @@ def oauth_google():
             # cookie_manager.set("google_token", st.session_state["google_token"])
             st.rerun()
     else:
+        print(cookie_manager.get(cookie="google_auth"))
         st.write("You are logged in with google!")
 
 def oauth_notion():
