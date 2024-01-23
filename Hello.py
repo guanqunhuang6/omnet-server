@@ -19,6 +19,16 @@ NOTION_PRIVATE_API_KEY = st.secrets["NOTION_PRIVATE_API_KEY"]
 NOTION_USER_DATABASE_ID = st.secrets["NOTION_USER_DATABASE_ID"]
 notion_client = Client(auth=NOTION_PRIVATE_API_KEY)
 
+# response = notion_client.databases.query(
+#             database_id=NOTION_USER_DATABASE_ID,
+#             filter={
+#                 "property": "email",
+#                 "title": {
+#                     "equals": "guanqunhuang6@gmail.com"
+#                 }
+#             }
+#         )
+
 st.set_page_config(
     page_title="omnet",
     page_icon=":robot:",
@@ -97,18 +107,20 @@ def oauth_google():
                         ]
                     },
                     "google_access_token": {
-                        "type": "text",
-                        "text": [
+                        "rich_text": [
                             {
-                                "content": st.session_state["google_token"]["access_token"]
+                                "text": {
+                                    "content": st.session_state["google_token"]["access_token"]
+                                }
                             }
                         ]
                     },
                     "google_refresh_token":{
-                        "type": "text",
-                        "text": [
+                        "rich_text": [
                             {
-                                "content": st.session_state["google_token"]["refresh_token"]
+                                "text": {
+                                    "content": st.session_state["google_token"]["refresh_token"]
+                                }
                             }
                         ]
                     }
@@ -129,18 +141,20 @@ def oauth_google():
                         ]
                     },
                     "google_access_token": {
-                        "type": "text",
-                        "text": [
+                        "rich_text": [
                             {
-                                "content": st.session_state["google_token"]["access_token"]
+                                "text": {
+                                    "content": st.session_state["google_token"]["access_token"]
+                                }
                             }
                         ]
                     },
                     "google_refresh_token":{
-                        "type": "text",
-                        "text": [
+                        "rich_text": [
                             {
-                                "content": st.session_state["google_token"]["refresh_token"]
+                                "text": {
+                                    "content": st.session_state["google_token"]["refresh_token"]
+                                }
                             }
                         ]
                     }
