@@ -242,7 +242,7 @@ def oauth_notion():
             st.rerun()
     else:
         st.write("You are logged in with notion!")
-        st.write(st.session_state["notion_token"])
+        # st.write(st.session_state["notion_token"])
         # st.button("Logout")
         # del st.session_state["notion_token"]
         if "google_auth" in st.session_state:
@@ -250,7 +250,7 @@ def oauth_notion():
                 database_id=NOTION_USER_DATABASE_ID,
                 filter={
                     "property": "email",
-                    "text": {
+                    "title": {
                         "equals": st.session_state["google_auth"]
                     }
                 }
@@ -293,7 +293,8 @@ def oauth_notion():
                 )
         
 def import_gmail():
-    pass
+    if st.button("Import Gmail"):
+        pass
 
 if __name__ == "__main__":
     oauth_google()
