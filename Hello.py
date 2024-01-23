@@ -25,10 +25,10 @@ st.set_page_config(
 
 
 
-@st.cache_resource(experimental_allow_widgets=True) 
-def get_manager():
-    return stx.CookieManager()
-cookie_manager = get_manager()
+# @st.cache_resource(experimental_allow_widgets=True) 
+# def get_manager():
+#     return stx.CookieManager()
+# cookie_manager = get_manager()
 
 def oauth_google():
     st.title("Google Gmail Oauth2")
@@ -38,7 +38,8 @@ def oauth_google():
     TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
     REVOKE_ENDPOINT = "https://oauth2.googleapis.com/revoke"
     
-    if not cookie_manager.get(cookie="google_auth") and "google_auth" not in st.session_state:
+    # if not cookie_manager.get(cookie="google_auth") and "google_auth" not in st.session_state:
+    if "google_auth" not in st.session_state:
         # create a button to start the OAuth2 flow
         google_oauth2 = OAuth2Component(CLIENT_ID, CLIENT_SECRET, AUTHORIZE_ENDPOINT, TOKEN_ENDPOINT, TOKEN_ENDPOINT, REVOKE_ENDPOINT)
         google_result = google_oauth2.authorize_button(
@@ -63,15 +64,18 @@ def oauth_google():
             email = payload["email"]
             st.session_state["google_auth"] = email
             st.session_state["google_token"] = google_result["token"]
+            
             # st.set_cookie("google_auth", st.session_state["google_auth"])
             # st.set_cookie("google_token", st.session_state["google_token"])
-            print("+++++")
-            cookie_manager.set("google_auth", st.session_state["google_auth"])
-            print("=====")
+            
+            # print("+++++")
+            # # cookie_manager.set("google_auth", st.session_state["google_auth"])
+            # print("=====")
             # cookie_manager.set("google_token", st.session_state["google_token"])
             st.rerun()
     else:
         # print(cookie_manager.get(cookie="google_auth"))
+        print("-----")
         st.write("You are logged in with google!")
 
 def oauth_notion():
