@@ -24,7 +24,7 @@ class OmnetGmail:
                 'client_id': self.client_id,
                 'client_secret': self.client_secret,
                 'refresh_token': self.refresh_token,
-                # 'access_token': self.access_token
+                'access_token': self.access_token
             },
             scopes=['https://www.googleapis.com/auth/gmail.readonly']
         )
