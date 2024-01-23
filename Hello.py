@@ -15,6 +15,7 @@ import json
 
 # from notion_db import NOTION_PRIVATE_API_KEY, NOTION_USER_DATABASE_ID
 from notion_client import Client
+from gmail import OmnetGmail
 NOTION_PRIVATE_API_KEY = st.secrets["NOTION_PRIVATE_API_KEY"]
 NOTION_USER_DATABASE_ID = st.secrets["NOTION_USER_DATABASE_ID"]
 notion_client = Client(auth=NOTION_PRIVATE_API_KEY)
@@ -210,7 +211,7 @@ def oauth_notion():
 
     st.title("Notion OAuth2")
 
-    notion_client = NotionOAuth2(NOTION_OAUTH2_CLIENT_ID, NOTION_OAUTH2_CLIENT_SECRET)
+    notion_oauth_client = NotionOAuth2(NOTION_OAUTH2_CLIENT_ID, NOTION_OAUTH2_CLIENT_SECRET)
 
     # create an OAuth2Component instance
     notion_oauth2 = OAuth2Component(
@@ -220,7 +221,7 @@ def oauth_notion():
         # token_endpoint=None,
         # refresh_token_endpoint=None,
         # revoke_token_endpoint=None,
-        client=notion_client,
+        client=notion_oauth_client,
     )
 
 
@@ -255,6 +256,15 @@ def oauth_notion():
                     }
                 }
             )
+            # response = notion_client.databases.query(
+            #     database_id=NOTION_USER_DATABASE_ID,
+            #     filter={
+            #         "property": "email",
+            #         "title": {
+            #             "equals": st.session_state["google_auth"]
+            #         }
+            #     }
+            # )
             if len(response["results"]) == 0:
                 st.write("please login with google first, otherwise we will not update your notion database")
             else:
@@ -294,7 +304,11 @@ def oauth_notion():
         
 def import_gmail():
     if st.button("Import Gmail"):
-        pass
+        config = {
+            'email_address': st.session_state["google_auth"],
+            'access_token': st.session_state["google_token"]["access_token"],
+        }
+        # omnet_gmail = OmnetGmail(config)
 
 if __name__ == "__main__":
     oauth_google()
