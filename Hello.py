@@ -78,7 +78,7 @@ def oauth_google():
             database_id=NOTION_USER_DATABASE_ID,
             filter={
                 "property": "email",
-                "text": {
+                "title": {
                     "equals": st.session_state["google_auth"]
                 }
             }
@@ -88,8 +88,13 @@ def oauth_google():
                 parent={"database_id": NOTION_USER_DATABASE_ID},
                 properties={
                     "email": {
-                        "type": "email",
-                        "email": st.session_state["google_auth"]
+                        "title": [
+                            {
+                                "text": {
+                                    "content": st.session_state["google_auth"]
+                                }
+                            }
+                        ]
                     },
                     "google_access_token": {
                         "type": "text",
@@ -115,8 +120,13 @@ def oauth_google():
                 page_id=page_id,
                 properties={
                     "email": {
-                        "type": "email",
-                        "email": st.session_state["google_auth"]
+                        "title": [
+                            {
+                                "text": {
+                                    "content": st.session_state["google_auth"]
+                                }
+                            }
+                        ]
                     },
                     "google_access_token": {
                         "type": "text",
@@ -238,10 +248,6 @@ def oauth_notion():
                 notion_client.pages.update(
                     page_id=page_id,
                     properties={
-                        "email": {
-                            "type": "email",
-                            "email": st.session_state["google_auth"]
-                        },
                         "notion_access_token": {
                             "type": "text",
                             "text": [
