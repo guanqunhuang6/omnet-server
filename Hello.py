@@ -73,52 +73,68 @@ def oauth_google():
         st.write("You are logged in with google!")
         st.write(st.session_state["google_auth"])
         st.write(st.session_state["google_token"])
-        # response = notion_client.databases.query(
-        #     database_id=NOTION_USER_DATABASE_ID,
-        #     filter={
-        #         "property": "email",
-        #         "text": {
-        #             "equals": st.session_state["google_auth"]
-        #         }
-        #     }
-        # )
-        # if len(response["results"]) == 0:
-        #     notion_client.pages.create(
-        #         parent={"database_id": NOTION_USER_DATABASE_ID},
-        #         properties={
-        #             "email": {
-        #                 "type": "email",
-        #                 "email": st.session_state["google_auth"]
-        #             },
-        #             "google_auth": {
-        #                 "type": "text",
-        #                 "text": [
-        #                     {
-        #                         "content": st.session_state["google_token"]
-        #                     }
-        #                 ]
-        #             }
-        #         }
-        #     )
-        # else:
-        #     page_id = response["results"][0]["id"]
-        #     notion_client.pages.update(
-        #         page_id=page_id,
-        #         properties={
-        #             "email": {
-        #                 "type": "email",
-        #                 "email": st.session_state["google_auth"]
-        #             },
-        #             "google_auth": {
-        #                 "type": "text",
-        #                 "text": [
-        #                     {
-        #                         "content": st.session_state["google_token"]
-        #                     }
-        #                 ]
-        #             }
-        #         }
-        #     )
+        response = notion_client.databases.query(
+            database_id=NOTION_USER_DATABASE_ID,
+            filter={
+                "property": "email",
+                "text": {
+                    "equals": st.session_state["google_auth"]
+                }
+            }
+        )
+        if len(response["results"]) == 0:
+            notion_client.pages.create(
+                parent={"database_id": NOTION_USER_DATABASE_ID},
+                properties={
+                    "email": {
+                        "type": "email",
+                        "email": st.session_state["google_auth"]
+                    },
+                    "google_access_token": {
+                        "type": "text",
+                        "text": [
+                            {
+                                "content": st.session_state["google_token"]["access_token"]
+                            }
+                        ]
+                    },
+                    "google_refresh_token":{
+                        "type": "text",
+                        "text": [
+                            {
+                                "content": st.session_state["google_token"]["refresh_token"]
+                            }
+                        ]
+                    }
+                }
+            )
+        else:
+            page_id = response["results"][0]["id"]
+            notion_client.pages.update(
+                page_id=page_id,
+                properties={
+                    "email": {
+                        "type": "email",
+                        "email": st.session_state["google_auth"]
+                    },
+                    "google_access_token": {
+                        "type": "text",
+                        "text": [
+                            {
+                                "content": st.session_state["google_token"]["access_token"]
+                            }
+                        ]
+                    },
+                    "google_refresh_token":{
+                        "type": "text",
+                        "text": [
+                            {
+                                "content": st.session_state["google_token"]["refresh_token"]
+                            }
+                        ]
+                    }
+                }
+            )
 
 def oauth_notion():
     NOTION_OAUTH2_CLIENT_ID = st.secrets["NOTION_OAUTH2_CLIENT_ID"]
@@ -204,6 +220,53 @@ def oauth_notion():
         st.write(st.session_state["notion_token"])
         # st.button("Logout")
         # del st.session_state["notion_token"]
+        if "google_auth" in st.session_state:
+            response = notion_client.databases.query(
+                database_id=NOTION_USER_DATABASE_ID,
+                filter={
+                    "property": "email",
+                    "text": {
+                        "equals": st.session_state["google_auth"]
+                    }
+                }
+            )
+            if len(response["results"]) == 0:
+                st.write("please login with google first, otherwise we will not update your notion database")
+            else:
+                page_id = response["results"][0]["id"]
+                notion_client.pages.update(
+                    page_id=page_id,
+                    properties={
+                        "email": {
+                            "type": "email",
+                            "email": st.session_state["google_auth"]
+                        },
+                        "notion_access_token": {
+                            "type": "text",
+                            "text": [
+                                {
+                                    "content": st.session_state["notion_token"]["token"]["access_token"]
+                                }
+                            ]
+                        },
+                        "notion_workspace_id":{
+                            "type": "text",
+                            "text": [
+                                {
+                                    "content": st.session_state["notion_token"]["token"]["workspace_id"]
+                                }
+                            ]
+                        },
+                        "notion_template_id":{
+                            "type": "text",
+                            "text": [
+                                {
+                                    "content": st.session_state["notion_token"]["token"]["duplicated_template_id"]
+                                }
+                            ]
+                        }
+                    }
+                )
         
 def import_gmail():
     pass
