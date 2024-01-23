@@ -23,12 +23,10 @@ st.set_page_config(
     page_icon=":robot:",
 )
 
-
-
-@st.cache_resource(experimental_allow_widgets=True) 
-def get_manager():
-    return stx.CookieManager()
-cookie_manager = get_manager()
+# @st.cache_resource(experimental_allow_widgets=True) 
+# def get_manager():
+#     return stx.CookieManager()
+# cookie_manager = get_manager()
 
 def oauth_google():
     st.title("Google Gmail Oauth2")
@@ -68,15 +66,59 @@ def oauth_google():
             # st.set_cookie("google_auth", st.session_state["google_auth"])
             # st.set_cookie("google_token", st.session_state["google_token"])
             
-            print("+++++")
-            cookie_manager.set("google_auth", st.session_state["google_auth"])
-            print("=====")
+            # cookie_manager.set("google_auth", st.session_state["google_auth"])
             # cookie_manager.set("google_token", st.session_state["google_token"])
             st.rerun()
     else:
-        # print(cookie_manager.get(cookie="google_auth"))
-        print("-----")
         st.write("You are logged in with google!")
+        st.write(st.session_state["google_auth"])
+        st.write(st.session_state["google_token"])
+        # response = notion_client.databases.query(
+        #     database_id=NOTION_USER_DATABASE_ID,
+        #     filter={
+        #         "property": "email",
+        #         "text": {
+        #             "equals": st.session_state["google_auth"]
+        #         }
+        #     }
+        # )
+        # if len(response["results"]) == 0:
+        #     notion_client.pages.create(
+        #         parent={"database_id": NOTION_USER_DATABASE_ID},
+        #         properties={
+        #             "email": {
+        #                 "type": "email",
+        #                 "email": st.session_state["google_auth"]
+        #             },
+        #             "google_auth": {
+        #                 "type": "text",
+        #                 "text": [
+        #                     {
+        #                         "content": st.session_state["google_token"]
+        #                     }
+        #                 ]
+        #             }
+        #         }
+        #     )
+        # else:
+        #     page_id = response["results"][0]["id"]
+        #     notion_client.pages.update(
+        #         page_id=page_id,
+        #         properties={
+        #             "email": {
+        #                 "type": "email",
+        #                 "email": st.session_state["google_auth"]
+        #             },
+        #             "google_auth": {
+        #                 "type": "text",
+        #                 "text": [
+        #                     {
+        #                         "content": st.session_state["google_token"]
+        #                     }
+        #                 ]
+        #             }
+        #         }
+        #     )
 
 def oauth_notion():
     NOTION_OAUTH2_CLIENT_ID = st.secrets["NOTION_OAUTH2_CLIENT_ID"]
@@ -159,7 +201,7 @@ def oauth_notion():
             st.rerun()
     else:
         st.write("You are logged in with notion!")
-        # st.write(st.session_state["notion_token"])
+        st.write(st.session_state["notion_token"])
         # st.button("Logout")
         # del st.session_state["notion_token"]
         
