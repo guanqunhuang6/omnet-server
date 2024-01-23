@@ -15,7 +15,7 @@ import json
 
 # from notion_db import NOTION_PRIVATE_API_KEY, NOTION_USER_DATABASE_ID
 from notion_client import Client
-from gmail import OmnetGmail
+
 NOTION_PRIVATE_API_KEY = st.secrets["NOTION_PRIVATE_API_KEY"]
 NOTION_USER_DATABASE_ID = st.secrets["NOTION_USER_DATABASE_ID"]
 notion_client = Client(auth=NOTION_PRIVATE_API_KEY)
@@ -302,6 +302,7 @@ def oauth_notion():
                     }
                 )
         
+# from gmail import OmnetGmail
 def import_gmail():
     if st.button("Import Gmail"):
         config = {
