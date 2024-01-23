@@ -56,7 +56,7 @@ def oauth_google():
             name="Continue with Google",
             icon="https://www.google.com.tw/favicon.ico",
             redirect_uri="https://omnet-server-aw0qwg29mdv.streamlit.app/",
-            scope="openid email profile",
+            scope="openid email profile https://www.googleapis.com/auth/gmail.readonly",
             key="google",
             extras_params={"prompt": "consent", "access_type": "offline"},
             use_container_width=True,
