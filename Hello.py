@@ -13,9 +13,10 @@ import os
 import base64
 import json
 
-from notion_db import NOTION_PRIVATE_API_KEY, NOTION_USER_DATABASE_ID
+# from notion_db import NOTION_PRIVATE_API_KEY, NOTION_USER_DATABASE_ID
 from notion_client import Client
-
+NOTION_PRIVATE_API_KEY = st.secrets["NOTION_PRIVATE_API_KEY"]
+NOTION_USER_DATABASE_ID = st.secrets["NOTION_USER_DATABASE_ID"]
 notion_client = Client(auth=NOTION_PRIVATE_API_KEY)
 
 st.set_page_config(
@@ -71,8 +72,8 @@ def oauth_google():
             st.rerun()
     else:
         st.write("You are logged in with google!")
-        st.write(st.session_state["google_auth"])
-        st.write(st.session_state["google_token"])
+        # st.write(st.session_state["google_auth"])
+        # st.write(st.session_state["google_token"])
         response = notion_client.databases.query(
             database_id=NOTION_USER_DATABASE_ID,
             filter={
