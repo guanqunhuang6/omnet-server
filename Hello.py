@@ -263,26 +263,29 @@ def oauth_notion():
                     page_id=page_id,
                     properties={
                         "notion_access_token": {
-                            "type": "text",
-                            "text": [
+                            "rich_text": [
                                 {
-                                    "content": st.session_state["notion_token"]["token"]["access_token"]
+                                    "text": {
+                                        "content": st.session_state["notion_token"]["token"]["access_token"]
+                                    }
                                 }
                             ]
                         },
                         "notion_workspace_id":{
-                            "type": "text",
-                            "text": [
+                            "rich_text": [
                                 {
-                                    "content": st.session_state["notion_token"]["token"]["workspace_id"]
+                                    "text": {
+                                        "content": st.session_state["notion_token"]["token"]["workspace_id"]
+                                    }
                                 }
                             ]
                         },
                         "notion_template_id":{
-                            "type": "text",
-                            "text": [
+                            "rich_text": [
                                 {
-                                    "content": st.session_state["notion_token"]["token"]["duplicated_template_id"]
+                                    "text": {
+                                        "content": st.session_state["notion_token"]["token"]["duplicated_template_id"]
+                                    }
                                 }
                             ]
                         }
