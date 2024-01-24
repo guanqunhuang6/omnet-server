@@ -8,6 +8,5 @@ httpx_oauth
 extra_streamlit_components
 notion_client
 google
-base64
 html2text
 email
