@@ -12,7 +12,7 @@ import extra_streamlit_components as stx
 import os
 import base64
 import json
-
+from pprint import pprint 
 # from notion_db import NOTION_PRIVATE_API_KEY, NOTION_USER_DATABASE_ID
 from notion_client import Client
 
@@ -29,6 +29,7 @@ notion_client = Client(auth=NOTION_PRIVATE_API_KEY)
 #                 }
 #             }
 #         )
+# pdb.set_trace()
 
 st.set_page_config(
     page_title="omnet",
@@ -302,15 +303,59 @@ def oauth_notion():
                     }
                 )
         
-# from gmail import OmnetGmail
+from gmail import OmnetGmail
 def import_gmail():
     if st.button("Import Gmail"):
-        config = {
+        gmail_config = {
             'email_address': st.session_state["google_auth"],
             'access_token': st.session_state["google_token"]["access_token"],
+            'refresh_token': st.session_state["google_token"]["refresh_token"],
+            'client_id': st.secrets["G_CLIENT_ID"],
+            'client_secret': st.secrets["G_CLIENT_SECRET"],
         }
-        # omnet_gmail = OmnetGmail(config)
+        omnet_gmail = OmnetGmail(gmail_config)
+        ## find email database in template notion page
+        if "google_auth" in st.session_state:
+            response = notion_client.databases.query(
+                database_id=NOTION_USER_DATABASE_ID,
+                filter={
+                    "property": "email",
+                    "title": {
+                        "equals": st.session_state["google_auth"]
+                    }
+                }
+            )
+            if len(response["results"]) == 0:
+                st.write("please login with google first, otherwise we will not update your notion database")
+            else:
+                notion_access_token = response["results"][0]["properties"]["notion_access_token"]["rich_text"][0]["text"]["content"]
+                notion_template_id = response["results"][0]["properties"]["notion_template_id"]["rich_text"][0]["text"]["content"]
+                notion_client_public = Client(auth=notion_access_token)
+                omnet_response = notion_client_public.blocks.children.list(block_id=notion_template_id)
+                for result in omnet_response["results"]:
+                    if result['type'] == "toggle":
+                        source_databases_id = result['id']
+                        break
+                source_databases = notion_client_public.blocks.children.list(block_id=source_databases_id)
+                for result in source_databases["results"]:
+                    if result['child_database']['title'] == "Emails":
+                        email_page_id = result['id']
+                        break
+                messages = omnet_gmail.get_from_specific_email("no-reply@opentable.com")
+                for message in messages:
+                    meta_data, content = omnet_gmail.get_content_from_id(message['id'])
+                    notion_client_public.pages.create(
+                        parent={ 'database_id': email_page_id },
+                        properties={
+                            # 'Subject': { 'title': [{ 'type': 'text', 'text': { 'content': "aaa" }}] },
+                            'Sender': { 'email': meta_data['sender']},
+                            'Receiver': { 'email': meta_data['receiver']},
+                            'Date': { 'date': { 'start': meta_data['date'],}},
+                            'Email Content': { 'rich_text': [{ 'type': 'text', 'text': { 'content': content[:2000] }}] },
+                        },
+                    )
 
 if __name__ == "__main__":
     oauth_google()
     oauth_notion()
+    import_gmail()
