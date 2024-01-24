@@ -9,4 +9,3 @@ extra_streamlit_components
 notion_client
 google
 html2text
-email
