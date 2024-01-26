@@ -24,6 +24,10 @@ class OmnetGmail:
         self.client_secret = config['client_secret']
         self.refresh_token = config['refresh_token']
         self.service = self.gmail_authenticate()
+        self.h2t = html2text.HTML2Text()
+        self.h2t.ignore_links = True
+        self.h2t.ignore_images = True
+        self.h2t.ignore_emphasis = True
 
     def gmail_authenticate(self):
         creds = Credentials.from_authorized_user_info({
@@ -71,11 +75,11 @@ class OmnetGmail:
                 meta_data['receiver'] = header['value']
             if name.lower() == 'date':
                 meta_data['date'] = parsedate_to_datetime(header['value']).isoformat()
-                
+        
         if data['payload']['mimeType'] == 'text/html':
             html_content = base64.urlsafe_b64decode(data['payload']['body']['data']).decode('utf-8')
-
-            markdown_content = html2text.html2text(html_content)
+            markdown_content = self.h2t.handle(html_content)
+            # markdown_content = html2text.html2text(html_content)
         elif data['payload']['mimeType'] == 'text/plain':
             markdown_content = data['payload']['body']['data']
             
@@ -122,15 +126,15 @@ if __name__ == '__main__':
     for message in messages:
         meta_data, content = omnet_gmail.get_content_from_id(message['id'])
 
-        notion_client_public.pages.create(
-            parent={ 'database_id': email_page_id },
-            properties={
-                # 'Subject': { 'title': [{ 'type': 'text', 'text': { 'content': "aaa" }}] },
-                'Sender': { 'email': meta_data['sender']},
-                'Receiver': { 'email': meta_data['receiver']},
-                'Date': { 'date': { 'start': meta_data['date'],}},
-                'Email Content': { 'rich_text': [{ 'type': 'text', 'text': { 'content': content[:2000] }}] },
-            },
-        )
+        # notion_client_public.pages.create(
+        #     parent={ 'database_id': email_page_id },
+        #     properties={
+        #         # 'Subject': { 'title': [{ 'type': 'text', 'text': { 'content': "aaa" }}] },
+        #         'Sender': { 'email': meta_data['sender']},
+        #         'Receiver': { 'email': meta_data['receiver']},
+        #         'Date': { 'date': { 'start': meta_data['date'],}},
+        #         'Email Content': { 'rich_text': [{ 'type': 'text', 'text': { 'content': content[:2000] }}] },
+        #     },
+        # )
         
     pdb.set_trace()
