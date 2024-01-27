@@ -125,6 +125,7 @@ if __name__ == '__main__':
     email_page_id = '763400cf-cada-4c2a-a75e-6588a260bf92'
     for message in messages:
         meta_data, content = omnet_gmail.get_content_from_id(message['id'])
+        print(meta_data['subject'])
 
         # notion_client_public.pages.create(
         #     parent={ 'database_id': email_page_id },

@@ -18,9 +18,11 @@ from notion_client import Client
 
 NOTION_PRIVATE_API_KEY = st.secrets["NOTION_PRIVATE_API_KEY"]
 NOTION_USER_DATABASE_ID = st.secrets["NOTION_USER_DATABASE_ID"]
-notion_client = Client(auth=NOTION_PRIVATE_API_KEY)
+APP_DIRECTORY_DATABASE_ID = st.secrets["APP_DIRECTORY_DATABASE_ID"]
 
-# response = notion_client.databases.query(
+notion_private_client = Client(auth=NOTION_PRIVATE_API_KEY)
+
+# response = notion_private_client.databases.query(
 #             database_id=NOTION_USER_DATABASE_ID,
 #             filter={
 #                 "property": "email",
@@ -86,7 +88,7 @@ def oauth_google():
         st.write("You are logged in with google!")
         # st.write(st.session_state["google_auth"])
         # st.write(st.session_state["google_token"])
-        response = notion_client.databases.query(
+        response = notion_private_client.databases.query(
             database_id=NOTION_USER_DATABASE_ID,
             filter={
                 "property": "email",
@@ -96,7 +98,7 @@ def oauth_google():
             }
         )
         if len(response["results"]) == 0:
-            notion_client.pages.create(
+            notion_private_client.pages.create(
                 parent={"database_id": NOTION_USER_DATABASE_ID},
                 properties={
                     "email": {
@@ -130,7 +132,7 @@ def oauth_google():
             )
         else:
             page_id = response["results"][0]["id"]
-            notion_client.pages.update(
+            notion_private_client.pages.update(
                 page_id=page_id,
                 properties={
                     "email": {
@@ -248,7 +250,7 @@ def oauth_notion():
         # st.button("Logout")
         # del st.session_state["notion_token"]
         if "google_auth" in st.session_state:
-            response = notion_client.databases.query(
+            response = notion_private_client.databases.query(
                 database_id=NOTION_USER_DATABASE_ID,
                 filter={
                     "property": "email",
@@ -257,7 +259,7 @@ def oauth_notion():
                     }
                 }
             )
-            # response = notion_client.databases.query(
+            # response = notion_private_client.databases.query(
             #     database_id=NOTION_USER_DATABASE_ID,
             #     filter={
             #         "property": "email",
@@ -270,7 +272,7 @@ def oauth_notion():
                 st.write("please login with google first, otherwise we will not update your notion database")
             else:
                 page_id = response["results"][0]["id"]
-                notion_client.pages.update(
+                notion_private_client.pages.update(
                     page_id=page_id,
                     properties={
                         "notion_access_token": {
@@ -316,7 +318,7 @@ def import_gmail():
         omnet_gmail = OmnetGmail(gmail_config)
         ## find email database in template notion page
         if "google_auth" in st.session_state:
-            response = notion_client.databases.query(
+            response = notion_private_client.databases.query(
                 database_id=NOTION_USER_DATABASE_ID,
                 filter={
                     "property": "email",
@@ -330,30 +332,45 @@ def import_gmail():
             else:
                 notion_access_token = response["results"][0]["properties"]["notion_access_token"]["rich_text"][0]["text"]["content"]
                 notion_template_id = response["results"][0]["properties"]["notion_template_id"]["rich_text"][0]["text"]["content"]
-                notion_client_public = Client(auth=notion_access_token)
-                omnet_response = notion_client_public.blocks.children.list(block_id=notion_template_id)
+                notion_user_client = Client(auth=notion_access_token)
+                omnet_response = notion_user_client.blocks.children.list(block_id=notion_template_id)
                 for result in omnet_response["results"]:
                     if result['type'] == "toggle":
                         source_databases_id = result['id']
                         break
-                source_databases = notion_client_public.blocks.children.list(block_id=source_databases_id)
+                source_databases = notion_user_client.blocks.children.list(block_id=source_databases_id)
                 for result in source_databases["results"]:
                     if result['child_database']['title'] == "Emails":
                         email_page_id = result['id']
                         break
-                messages = omnet_gmail.get_from_specific_email("no-reply@opentable.com")
-                for message in messages:
-                    meta_data, content = omnet_gmail.get_content_from_id(message['id'])
-                    notion_client_public.pages.create(
-                        parent={ 'database_id': email_page_id },
-                        properties={
-                            # 'Subject': { 'title': [{ 'type': 'text', 'text': { 'content': "aaa" }}] },
-                            'Sender': { 'email': meta_data['sender']},
-                            'Receiver': { 'email': meta_data['receiver']},
-                            'Date': { 'date': { 'start': meta_data['date'],}},
-                            'Email Content': { 'rich_text': [{ 'type': 'text', 'text': { 'content': content[:2000] }}] },
-                        },
-                    )
+                    
+                ## Get app directory from database
+                app_directory_response = notion_private_client.databases.query(
+                    database_id=APP_DIRECTORY_DATABASE_ID,
+                    filter={
+                        "property": "Email Sample",
+                        "checkbox": {
+                            "equals": True,
+                        }
+                    }
+                )
+                for app_directory_result in app_directory_response["results"]:
+                    transactional_email = app_directory_result["properties"]["Transactional Email"]['email']
+                    key_words = app_directory_result["properties"]["Key String"]['rich_text'][0]['text']['content']
+                    messages = omnet_gmail.get_from_specific_email(transactional_email)
+                    for message in messages:
+                        meta_data, content = omnet_gmail.get_content_from_id(message['id'])
+                        if key_words in meta_data['subject']:
+                            notion_user_client.pages.create(
+                                parent={ 'database_id': email_page_id },
+                                properties={
+                                    # 'Subject': { 'title': [{ 'type': 'text', 'text': { 'content': "aaa" }}] },
+                                    'Sender': { 'email': meta_data['sender']},
+                                    'Receiver': { 'email': meta_data['receiver']},
+                                    'Date': { 'date': { 'start': meta_data['date'],}},
+                                    'Email Content': { 'rich_text': [{ 'type': 'text', 'text': { 'content': content[:2000] }}] },
+                                },
+                            )
 
 if __name__ == "__main__":
     oauth_google()
