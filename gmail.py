@@ -82,9 +82,17 @@ class OmnetGmail:
             # markdown_content = html2text.html2text(html_content)
         elif data['payload']['mimeType'] == 'text/plain':
             markdown_content = data['payload']['body']['data']
+        elif data['payload']['mimeType'] == 'multipart/alternative':
+            for part in data['payload']['parts']:
+                if part['mimeType'] == 'text/html':
+                    html_content = base64.urlsafe_b64decode(part['body']['data']).decode('utf-8')
+                    markdown_content = self.h2t.handle(html_content)
+                    # markdown_content = html2text.html2text(html_content)
+                elif part['mimeType'] == 'text/plain':
+                    markdown_content = part['body']['data']
         else:
             markdown_content = "None"
-            
+        pdb.set_trace()
         return meta_data, markdown_content
         
         # raw_email = data[0][1]
@@ -112,7 +120,50 @@ class OmnetGmail:
         #     return meta_data, html2text.html2text(email_message.get_payload())
 
 if __name__ == '__main__':
+    # toml_file = read_toml('./.streamlit/secrets.toml')
+    # config = {
+    #     'client_id': toml_file['G_CLIENT_ID'],
+    #     'client_secret': toml_file['G_CLIENT_SECRET'],
+    #     'refresh_token': toml_file['G_REFRESH_TOKEN'],
+    #     'email_address': 'guanqunhuang6@gmail.com',
+    #     'access_token': toml_file['G_ACCESS_TOKEN'],
+    # }
+    # NOTION_ACCESS_TOKEN = toml_file['NOTION_ACCESS_TOKEN']
+    # omnet_gmail = OmnetGmail(config)
+    # messages = omnet_gmail.get_from_specific_email("no-reply@opentable.com")
+    # notion_client_public = Client(auth=NOTION_ACCESS_TOKEN)
+    # email_page_id = '763400cf-cada-4c2a-a75e-6588a260bf92'
+    # for message in messages:
+    #     meta_data, content = omnet_gmail.get_content_from_id(message['id'])
+    #     print(meta_data['subject'])
+
+    #     # notion_client_public.pages.create(
+    #     #     parent={ 'database_id': email_page_id },
+    #     #     properties={
+    #     #         # 'Subject': { 'title': [{ 'type': 'text', 'text': { 'content': "aaa" }}] },
+    #     #         'Sender': { 'email': meta_data['sender']},
+    #     #         'Receiver': { 'email': meta_data['receiver']},
+    #     #         'Date': { 'date': { 'start': meta_data['date'],}},
+    #     #         'Email Content': { 'rich_text': [{ 'type': 'text', 'text': { 'content': content[:2000] }}] },
+    #     #     },
+    #     # )
     toml_file = read_toml('./.streamlit/secrets.toml')
+    # pdb.set_trace()
+    NOTION_USER_DATABASE_ID = toml_file["NOTION_USER_DATABASE_ID"]
+    APP_DIRECTORY_DATABASE_ID = toml_file["APP_DIRECTORY_DATABASE_ID"]
+    NOTION_PRIVATE_API_KEY = toml_file["NOTION_PRIVATE_API_KEY"]
+    notion_private_client = Client(auth=NOTION_PRIVATE_API_KEY)
+    ## Get app directory from database
+    app_directory_response = notion_private_client.databases.query(
+        database_id=APP_DIRECTORY_DATABASE_ID,
+        filter={
+            "property": "Email Sample",
+            "checkbox": {
+                "equals": True,
+            }
+        }
+    )
+    
     config = {
         'client_id': toml_file['G_CLIENT_ID'],
         'client_secret': toml_file['G_CLIENT_SECRET'],
@@ -122,22 +173,15 @@ if __name__ == '__main__':
     }
     NOTION_ACCESS_TOKEN = toml_file['NOTION_ACCESS_TOKEN']
     omnet_gmail = OmnetGmail(config)
-    messages = omnet_gmail.get_from_specific_email("no-reply@opentable.com")
-    notion_client_public = Client(auth=NOTION_ACCESS_TOKEN)
-    email_page_id = '763400cf-cada-4c2a-a75e-6588a260bf92'
-    for message in messages:
-        meta_data, content = omnet_gmail.get_content_from_id(message['id'])
-        print(meta_data['subject'])
-
-        # notion_client_public.pages.create(
-        #     parent={ 'database_id': email_page_id },
-        #     properties={
-        #         # 'Subject': { 'title': [{ 'type': 'text', 'text': { 'content': "aaa" }}] },
-        #         'Sender': { 'email': meta_data['sender']},
-        #         'Receiver': { 'email': meta_data['receiver']},
-        #         'Date': { 'date': { 'start': meta_data['date'],}},
-        #         'Email Content': { 'rich_text': [{ 'type': 'text', 'text': { 'content': content[:2000] }}] },
-        #     },
-        # )
-        
-    pdb.set_trace()
+    for app_directory_result in app_directory_response["results"]:
+        transactional_email = app_directory_result["properties"]["Transactional Email"]['email']
+        key_words = app_directory_result["properties"]["Key String"]['rich_text'][0]['text']['content']
+        print(transactional_email, key_words)
+        if transactional_email != "expedia@eg.expedia.com":
+            continue
+        messages = omnet_gmail.get_from_specific_email(transactional_email)
+        for message in messages:
+            meta_data, content = omnet_gmail.get_content_from_id(message['id'])
+            # pdb.set_trace()
+            if key_words in meta_data['subject']:
+                pdb.set_trace()
