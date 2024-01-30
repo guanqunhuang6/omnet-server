@@ -83,7 +83,7 @@ class OmnetGmail:
         elif data['payload']['mimeType'] == 'text/plain':
             markdown_content = data['payload']['body']['data']
         else:
-            markdown_content = data['payload']['body']['data']
+            markdown_content = "None"
             
         return meta_data, markdown_content
         
