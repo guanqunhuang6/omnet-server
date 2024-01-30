@@ -92,7 +92,7 @@ class OmnetGmail:
                     markdown_content = part['body']['data']
         else:
             markdown_content = "None"
-        pdb.set_trace()
+        # pdb.set_trace()
         return meta_data, markdown_content
         
         # raw_email = data[0][1]
