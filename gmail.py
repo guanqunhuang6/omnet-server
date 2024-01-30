@@ -82,6 +82,8 @@ class OmnetGmail:
             # markdown_content = html2text.html2text(html_content)
         elif data['payload']['mimeType'] == 'text/plain':
             markdown_content = data['payload']['body']['data']
+        else:
+            markdown_content = data['payload']['body']['data']
             
         return meta_data, markdown_content
         
