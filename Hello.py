@@ -249,7 +249,7 @@ def oauth_notion():
         # st.write(st.session_state["notion_token"])
         # st.button("Logout")
         # del st.session_state["notion_token"]
-        if "google_auth" in st.session_state:
+        if "google_auth" in st.session_state and "notion_update" not in st.session_state:
             response = notion_private_client.databases.query(
                 database_id=NOTION_USER_DATABASE_ID,
                 filter={
@@ -304,6 +304,7 @@ def oauth_notion():
                         }
                     }
                 )
+                st.session_state["notion_update"] = True
         
 from gmail import OmnetGmail
 def import_gmail():
@@ -357,6 +358,7 @@ def import_gmail():
                 for app_directory_result in app_directory_response["results"]:
                     transactional_email = app_directory_result["properties"]["Transactional Email"]['email']
                     key_words = app_directory_result["properties"]["Key String"]['rich_text'][0]['text']['content']
+                    print(transactional_email, key_words)
                     messages = omnet_gmail.get_from_specific_email(transactional_email)
                     for message in messages:
                         meta_data, content = omnet_gmail.get_content_from_id(message['id'])
