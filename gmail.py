@@ -47,8 +47,14 @@ class OmnetGmail:
 
     def get_from_specific_email(self, email_address):
         try:
-            results = self.service.users().messages().list(userId='me', q="from:{}".format(email_address)).execute()
-            messages = results.get('messages', [])
+            messages = []
+            request = self.service.users().messages().list(userId='me', q="from:{}".format(email_address))
+
+            while request is not None:
+                response = request.execute()
+                messages.extend(response.get('messages', []))
+                request = self.service.users().messages().list_next(request, response)
+
             return messages
         except Exception as error:
             print('An error occurred: %s' % error)
@@ -177,7 +183,7 @@ if __name__ == '__main__':
         transactional_email = app_directory_result["properties"]["Transactional Email"]['email']
         key_words = app_directory_result["properties"]["Key String"]['rich_text'][0]['text']['content']
         print(transactional_email, key_words)
-        if transactional_email != "expedia@eg.expedia.com":
+        if transactional_email != "noreply@uber.com":
             continue
         messages = omnet_gmail.get_from_specific_email(transactional_email)
         for message in messages:
