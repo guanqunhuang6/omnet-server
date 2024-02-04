@@ -307,6 +307,8 @@ def oauth_notion():
                 st.session_state["notion_update"] = True
         
 from gmail import OmnetGmail
+from openai_cli import OpenAIClient
+
 def import_gmail():
     if st.button("Import Gmail"):
         gmail_config = {
@@ -315,8 +317,16 @@ def import_gmail():
             'refresh_token': st.session_state["google_token"]["refresh_token"],
             'client_id': st.secrets["G_CLIENT_ID"],
             'client_secret': st.secrets["G_CLIENT_SECRET"],
+            
         }
         omnet_gmail = OmnetGmail(gmail_config)
+        
+        openai_config = {
+            'OPENAI_API_KEY': st.secrets["OPENAI_API_KEY"],
+            'GPT_MODEL': "gpt-3.5-turbo-0613"
+        }
+        
+        openai_client = OpenAIClient(openai_config)
         ## find email database in template notion page
         if "google_auth" in st.session_state:
             response = notion_private_client.databases.query(
@@ -343,7 +353,12 @@ def import_gmail():
                 for result in source_databases["results"]:
                     if result['child_database']['title'] == "Emails":
                         email_page_id = result['id']
-                        break
+                    elif result['child_database']['title'] == "Restaurants":
+                        restaurant_page_id = result['id']
+                    elif result['child_database']['title'] == "Meals":
+                        meals_page_id = result['id']
+                    else:
+                        pass
                     
                 ## Get app directory from database
                 app_directory_response = notion_private_client.databases.query(
@@ -358,21 +373,48 @@ def import_gmail():
                 for app_directory_result in app_directory_response["results"]:
                     transactional_email = app_directory_result["properties"]["Transactional Email"]['email']
                     key_words = app_directory_result["properties"]["Key String"]['rich_text'][0]['text']['content']
-                    print(transactional_email, key_words)
+                    # print(transactional_email, key_words)
                     messages = omnet_gmail.get_from_specific_email(transactional_email)
                     for message in messages:
                         meta_data, content = omnet_gmail.get_content_from_id(message['id'])
                         if key_words in meta_data['subject']:
+                            
+                            ## write into email database for user 
                             notion_user_client.pages.create(
                                 parent={ 'database_id': email_page_id },
                                 properties={
-                                    # 'Subject': { 'title': [{ 'type': 'text', 'text': { 'content': "aaa" }}] },
-                                    'Sender': { 'email': meta_data['sender']},
+                                    'Subject': { 'title': [{ 'type': 'text', 'text': { 'content': meta_data['subject'] }}] },
+                                    'Sender': { 'email': transactional_email},
                                     'Receiver': { 'email': meta_data['receiver']},
                                     'Date': { 'date': { 'start': meta_data['date'],}},
                                     'Email Content': { 'rich_text': [{ 'type': 'text', 'text': { 'content': content[:2000] }}] },
                                 },
                             )
+                            
+                            ## write into other database from email database 
+                            content = "'email_subject': " + meta_data['subject'] + ", 'email_content': " + content
+                            openai_response = openai_client.extract_info_from_email(content)
+                            
+                            openai_response_json = json.loads(openai_response.tool_calls[0].function.arguments)
+                            restaurant_response = notion_private_client.databases.query(
+                                database_id=restaurant_page_id,
+                                filter={
+                                    "property": "Name",
+                                    "title": {
+                                        "equals": openai_response_json['Restaurant']
+                                    }
+                                }
+                            )
+                            if len(restaurant_response["results"]) == 0:
+                                notion_user_client.pages.create(
+                                    parent={ 'database_id': restaurant_page_id },
+                                    properties={
+                                        'Name': { 'title': [{ 'type': 'text', 'text': { 'content': openai_response_json['Restaurant'] }}] },
+                                    },
+                                )
+                            else:
+                                pass
+
 
 if __name__ == "__main__":
     oauth_google()

@@ -10,3 +10,4 @@ notion_client
 google-auth
 google-api-python-client
 html2text
+openai

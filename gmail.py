@@ -7,6 +7,7 @@ import pdb
 from notion_client import Client
 from datetime import datetime
 from email.utils import parsedate_to_datetime
+from openai_cli import OpenAIClient
 
 # read ./streamlit/secrets.toml
 def read_toml(path):
@@ -71,6 +72,7 @@ class OmnetGmail:
         data = self.get_from_id(email_id)
         headers = data['payload']['headers']
         meta_data = {}
+        meta_data['email_id'] = email_id
         for header in headers:
             name = header['name']
             if name.lower() == 'subject':
@@ -176,18 +178,23 @@ if __name__ == '__main__':
         'refresh_token': toml_file['G_REFRESH_TOKEN'],
         'email_address': 'guanqunhuang6@gmail.com',
         'access_token': toml_file['G_ACCESS_TOKEN'],
+        'OPENAI_API_KEY': toml_file["OPENAI_API_KEY"],
+        'GPT_MODEL': "gpt-3.5-turbo-0613"
     }
     NOTION_ACCESS_TOKEN = toml_file['NOTION_ACCESS_TOKEN']
     omnet_gmail = OmnetGmail(config)
+    openai_client = OpenAIClient(config)
     for app_directory_result in app_directory_response["results"]:
         transactional_email = app_directory_result["properties"]["Transactional Email"]['email']
         key_words = app_directory_result["properties"]["Key String"]['rich_text'][0]['text']['content']
         print(transactional_email, key_words)
-        if transactional_email != "noreply@uber.com":
+        if transactional_email != "no-reply@opentable.com":
             continue
         messages = omnet_gmail.get_from_specific_email(transactional_email)
         for message in messages:
             meta_data, content = omnet_gmail.get_content_from_id(message['id'])
-            # pdb.set_trace()
+            content = "'email_subject': " + meta_data['subject'] + ", 'email_content': " + content
+            openai_response = openai_client.extract_info_from_email(content)
+            pdb.set_trace()
             if key_words in meta_data['subject']:
                 pdb.set_trace()
