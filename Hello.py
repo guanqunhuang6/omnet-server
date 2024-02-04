@@ -406,7 +406,7 @@ def import_gmail():
                                 }
                             )
                             if len(restaurant_response["results"]) == 0:
-                                notion_user_client.pages.create(
+                                restaurant_row_response = notion_user_client.pages.create(
                                     parent={ 'database_id': restaurant_page_id },
                                     properties={
                                         'Name': { 'title': [{ 'type': 'text', 'text': { 'content': openai_response_json['Restaurant'] }}] },
@@ -414,6 +414,19 @@ def import_gmail():
                                 )
                             else:
                                 pass
+                            
+                            ## write into notion Meals database
+                            notion_user_client.pages.create(
+                                parent={ 'database_id': meals_page_id },
+                                properties={
+                                    'Restaurant': { 
+                                        'relation': [{ 'id': restaurant_row_response['id'] }] 
+                                    },
+                                    'Meal Type': { 
+                                        'select': { 'name': openai_response_json['Meal Type'] }
+                                    },
+                                },
+                            )
 
 
 if __name__ == "__main__":
