@@ -383,7 +383,7 @@ def import_gmail():
                             notion_user_client.pages.create(
                                 parent={ 'database_id': email_page_id },
                                 properties={
-                                    'Subject': { 'title': [{ 'type': 'text', 'text': { 'content': meta_data['subject'] }}] },
+                                    'Subject': { 'rich_text': [{ 'type': 'text', 'text': { 'content': meta_data['subject'] }}] },
                                     'Sender': { 'email': transactional_email},
                                     'Receiver': { 'email': meta_data['receiver']},
                                     'Date': { 'date': { 'start': meta_data['date'],}},
