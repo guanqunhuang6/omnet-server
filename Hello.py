@@ -396,7 +396,7 @@ def import_gmail():
                             openai_response = openai_client.extract_info_from_email(content)
                             
                             openai_response_json = json.loads(openai_response.tool_calls[0].function.arguments)
-                            restaurant_response = notion_private_client.databases.query(
+                            restaurant_response = notion_user_client.databases.query(
                                 database_id=restaurant_page_id,
                                 filter={
                                     "property": "Name",
