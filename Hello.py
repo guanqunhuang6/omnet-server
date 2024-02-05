@@ -309,6 +309,12 @@ def oauth_notion():
 from gmail import OmnetGmail
 from openai_cli import OpenAIClient
 
+openai_config = {
+    'OPENAI_API_KEY': st.secrets["OPENAI_API_KEY"],
+    'GPT_MODEL': "gpt-3.5-turbo-0613"
+}
+openai_client = OpenAIClient(openai_config)
+
 def import_gmail():
     if st.button("Import Gmail"):
         gmail_config = {
@@ -320,13 +326,6 @@ def import_gmail():
             
         }
         omnet_gmail = OmnetGmail(gmail_config)
-        
-        openai_config = {
-            'OPENAI_API_KEY': st.secrets["OPENAI_API_KEY"],
-            'GPT_MODEL': "gpt-3.5-turbo-0613"
-        }
-        
-        openai_client = OpenAIClient(openai_config)
         ## find email database in template notion page
         if "google_auth" in st.session_state:
             response = notion_private_client.databases.query(
@@ -465,8 +464,45 @@ def import_gmail():
                                 },
                             )
 
+from streamlit_chat import message
+def omnet_rag():
+    if 'generated' not in st.session_state:
+        st.session_state['generated'] = []
 
+    if 'past' not in st.session_state:
+        st.session_state['past'] = []
+        
+    if 'chat_status' not in st.session_state:
+        st.session_state['chat_status'] = 'init'
+        
+    prompt = st.text_input(f"please ask: ", key="input")
+    if st.button("Ask AI"):
+        # if st.session_state['google_auth'] is None:
+        #     message('please login with google first')
+        # else:
+        if st.session_state['chat_status'] == 'init':
+            messages = []
+            messages.append({"role": "user", "content": prompt})
+            response = openai_client.chat_completion_request(messages).choices[0].message
+            st.session_state.past.append(prompt)
+            st.session_state.generated.append(response.content)
+            st.session_state['chat_status'] = 'generated'
+        elif st.session_state['chat_status'] == 'generated':
+            messages = []
+            messages.append({"role": "user", "content": prompt})
+            response = openai_client.chat_completion_request(messages).choices[0].message
+            st.session_state.past.append(prompt)
+            st.session_state.generated.append(response.content)
+        
+    if st.session_state['generated']:
+        # print("len(st.session_state['generated']) is ", len(st.session_state['generated']))
+
+        for i in range(len(st.session_state['generated'])-1, -1, -1):
+            message(st.session_state["generated"][i], key=str(i))
+            message(st.session_state['past'][i], is_user=True, key=str(i) + '_user')
+            
 if __name__ == "__main__":
     oauth_google()
     oauth_notion()
     import_gmail()
+    omnet_rag()
