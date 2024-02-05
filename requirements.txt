@@ -4,6 +4,7 @@ pandas
 pydeck
 streamlit
 streamlit_oauth
+streamlit_chat
 httpx_oauth
 extra_streamlit_components
 notion_client
