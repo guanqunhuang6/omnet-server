@@ -24,12 +24,20 @@ tools = [
                     },
                     "Time": {
                         "type": "string",
-                        "description": "datetime format of the time of this event",
+                        "description": "datetime format of the time of this event in ISO 8601 format",
                     },
                     "Meal Type":{
                         "type": "string",
                         "enum": ["Breakfast", "Lunch", "Dinner", "Brunch"],
                         "description": "Breakfast, Lunch, Dinner, Brunch, etc."
+                    },
+                    "Detailed Address":{
+                        "type": "string",
+                        "description": "This is the detailed address of the restaurant"
+                    },
+                    "Zip Code":{
+                        "type": "string",
+                        "description": "This is the zip code of the restaurant"
                     },
                 },
                 "required": ["location", "format"],

@@ -19,7 +19,7 @@ from notion_client import Client
 NOTION_PRIVATE_API_KEY = st.secrets["NOTION_PRIVATE_API_KEY"]
 NOTION_USER_DATABASE_ID = st.secrets["NOTION_USER_DATABASE_ID"]
 APP_DIRECTORY_DATABASE_ID = st.secrets["APP_DIRECTORY_DATABASE_ID"]
-
+PUBLIC_RESTAURANT_DATABASE_ID = st.secrets["PUBLIC_RESTAURANT_DATABASE_ID"]
 notion_private_client = Client(auth=NOTION_PRIVATE_API_KEY)
 
 # response = notion_private_client.databases.query(
@@ -396,6 +396,38 @@ def import_gmail():
                             openai_response = openai_client.extract_info_from_email(content)
                             
                             openai_response_json = json.loads(openai_response.tool_calls[0].function.arguments)
+                            public_restaurant_response = notion_private_client.databases.query(
+                                database_id=PUBLIC_RESTAURANT_DATABASE_ID,
+                                filter={
+                                    "and": [
+                                        {
+                                            "property": "Name",
+                                            "title": {
+                                                "equals": openai_response_json['Restaurant']
+                                            }
+                                        },
+                                        {
+                                            "property": "Zip Code",
+                                            "text": {
+                                                "equals": openai_response_json['Zip Code']
+                                            }
+                                        }
+                                    ]
+                                }
+                            )
+                            
+                            if len(public_restaurant_response["results"]) == 0:
+                                public_restaurant_row_response = notion_private_client.page.create(
+                                    parent={ 'database_id': PUBLIC_RESTAURANT_DATABASE_ID },
+                                    properties={
+                                        'Name': { 'title': [{ 'type': 'text', 'text': { 'content': openai_response_json['Restaurant'] }}] },
+                                        'Zip Code': { 'text': { 'content': openai_response_json['Zip Code'] } },
+                                    },
+                                )
+                                public_restaurant_row_page_id = public_restaurant_row_response['id']
+                            else:
+                                public_restaurant_row_page_id = public_restaurant_response["results"][0]["id"]
+                            
                             restaurant_response = notion_user_client.databases.query(
                                 database_id=restaurant_page_id,
                                 filter={
@@ -410,6 +442,9 @@ def import_gmail():
                                     parent={ 'database_id': restaurant_page_id },
                                     properties={
                                         'Name': { 'title': [{ 'type': 'text', 'text': { 'content': openai_response_json['Restaurant'] }}] },
+                                        'Public Profile': {
+                                            "relation": [{ "id": public_restaurant_row_page_id}],
+                                        }
                                     },
                                 )
                             else:
@@ -425,6 +460,7 @@ def import_gmail():
                                     'Meal Type': { 
                                         'select': { 'name': openai_response_json['Meal Type'] }
                                     },
+                                    'Time': { 'date': { 'start': openai_response_json['Time'] } },
                                 },
                             )
 
