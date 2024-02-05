@@ -418,7 +418,7 @@ def import_gmail():
                             )
                             
                             if len(public_restaurant_response["results"]) == 0:
-                                public_restaurant_row_response = notion_private_client.page.create(
+                                public_restaurant_row_response = notion_private_client.pages.create(
                                     parent={ 'database_id': PUBLIC_RESTAURANT_DATABASE_ID },
                                     properties={
                                         'Name': { 'title': [{ 'type': 'text', 'text': { 'content': openai_response_json['Restaurant'] }}] },
