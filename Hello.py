@@ -422,7 +422,7 @@ def import_gmail():
                                     parent={ 'database_id': PUBLIC_RESTAURANT_DATABASE_ID },
                                     properties={
                                         'Name': { 'title': [{ 'type': 'text', 'text': { 'content': openai_response_json['Restaurant'] }}] },
-                                        'Zip Code': { 'text': { 'content': openai_response_json['Zip Code'] } },
+                                        'Zip Code':  { 'rich_text': [{ 'type': 'text', 'text': { 'content': openai_response_json['Zip Code'] }}] },
                                     },
                                 )
                                 public_restaurant_row_page_id = public_restaurant_row_response['id']
