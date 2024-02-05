@@ -396,6 +396,7 @@ def import_gmail():
                             openai_response = openai_client.extract_info_from_email(content)
                             
                             openai_response_json = json.loads(openai_response.tool_calls[0].function.arguments)
+                            print(openai_response_json)
                             public_restaurant_response = notion_private_client.databases.query(
                                 database_id=PUBLIC_RESTAURANT_DATABASE_ID,
                                 filter={
@@ -408,7 +409,7 @@ def import_gmail():
                                         },
                                         {
                                             "property": "Zip Code",
-                                            "text": {
+                                            "rich_text": {
                                                 "equals": openai_response_json['Zip Code']
                                             }
                                         }
