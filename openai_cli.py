@@ -14,7 +14,7 @@ tools = [
         "type": "function",
         "function": {
             "name": "write_into_database",
-            "description": "write into the Meal schema and Restaurant schema from email data like uber eats, opentable, tock etc. If you can not find the exact information, you should output None in the corresponding field.",
+            "description": "write into the Meal schema and Restaurant schema from email data like uber eats, opentable, tock etc. If you can not find the exact information, you should output 'None' in the corresponding field.",
             "parameters": {
                 "type": "object",
                 "properties": {
