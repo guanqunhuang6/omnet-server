@@ -311,7 +311,8 @@ from openai_cli import OpenAIClient
 
 openai_config = {
     'OPENAI_API_KEY': st.secrets["OPENAI_API_KEY"],
-    'GPT_MODEL': "gpt-3.5-turbo-0613"
+    # 'GPT_MODEL': "gpt-3.5-turbo-0613"
+    'GPT_MODEL': 'gpt-4-1106-preview'
 }
 openai_client = OpenAIClient(openai_config)
 
