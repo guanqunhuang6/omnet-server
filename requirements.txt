@@ -13,3 +13,5 @@ google-api-python-client
 html2text
 openai
 termcolor
+numpy
+sklearn

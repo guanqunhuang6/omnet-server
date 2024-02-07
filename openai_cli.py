@@ -1,7 +1,7 @@
 from openai import OpenAI
 from tenacity import retry, wait_random_exponential, stop_after_attempt
 from termcolor import colored  
-
+import pdb
 # read ./streamlit/secrets.toml
 def read_toml(path):
     import toml
@@ -109,6 +109,15 @@ class OpenAIClient:
             print(f"Exception: {e}")
             return e
         
+    def text_embedding_request(self, texts, model="text-embedding-3-small"):
+        try:
+            response = self.client.embeddings.create(input=[texts], model=model).data[0].embedding
+            return response
+        except Exception as e:
+            print("Unable to generate TextEmbedding response")
+            print(f"Exception: {e}")
+            return e
+        
     def extract_info_from_email(self, email_content: str):
         messages = []
         messages.append({"role": "system", "content": "Use the email content from user to extract information. And I will use the function 'write_into_database' to write the extracted information into the database."})
@@ -128,3 +137,6 @@ if __name__ == "__main__":
         OPENAI_API_KEY=toml_file["OPENAI_API_KEY"],
         GPT_MODEL="gpt-3.5-turbo-0613"
     )
+    openai_client = OpenAIClient(config)
+    embedding = openai_client.text_embedding_request("I am a good")
+    pdb.set_trace()

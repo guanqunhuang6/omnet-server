@@ -311,8 +311,8 @@ from openai_cli import OpenAIClient
 
 openai_config = {
     'OPENAI_API_KEY': st.secrets["OPENAI_API_KEY"],
-    # 'GPT_MODEL': "gpt-3.5-turbo-0613"
-    'GPT_MODEL': 'gpt-4-1106-preview'
+    'GPT_MODEL': "gpt-3.5-turbo-0613"
+    # 'GPT_MODEL': 'gpt-4-1106-preview'
 }
 openai_client = OpenAIClient(openai_config)
 
@@ -457,9 +457,9 @@ def import_gmail():
                                     'Restaurant': { 
                                         'relation': [{ 'id': restaurant_row_response['id'] }] 
                                     },
-                                    'Meal Type': { 
-                                        'select': { 'name': openai_response_json['Meal Type'] }
-                                    },
+                                    # 'Meal Type': { 
+                                    #     'select': { 'name': openai_response_json['Meal Type'] }
+                                    # },
                                     'Time': { 'date': { 'start': openai_response_json['Time'] } },
                                     'Method': {
                                         'select': { 'name': openai_response_json['Method'] }
@@ -471,7 +471,84 @@ def import_gmail():
                             )
 
 from streamlit_chat import message
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
 def omnet_rag():
+    if st.button('refresh database'):
+        if "google_auth" in st.session_state:
+            response = notion_private_client.databases.query(
+                database_id=NOTION_USER_DATABASE_ID,
+                filter={
+                    "property": "email",
+                    "title": {
+                        "equals": st.session_state["google_auth"]
+                    }
+                }
+            )
+            if len(response["results"]) == 0:
+                st.write("please login with google first, otherwise we will not update your notion database")
+            else:
+                notion_access_token = response["results"][0]["properties"]["notion_access_token"]["rich_text"][0]["text"]["content"]
+                notion_template_id = response["results"][0]["properties"]["notion_template_id"]["rich_text"][0]["text"]["content"]
+                notion_user_client = Client(auth=notion_access_token)
+                omnet_response = notion_user_client.blocks.children.list(block_id=notion_template_id)
+                for result in omnet_response["results"]:
+                    if result['type'] == "toggle":
+                        source_databases_id = result['id']
+                        break
+                source_databases = notion_user_client.blocks.children.list(block_id=source_databases_id)
+                for result in source_databases["results"]:
+                    if result['child_database']['title'] == "Emails":
+                        email_page_id = result['id']
+                    elif result['child_database']['title'] == "Restaurants":
+                        restaurant_page_id = result['id']
+                    elif result['child_database']['title'] == "Meals":
+                        meals_page_id = result['id']
+                    elif result['child_database']['title'] == "Text Embedding":
+                        text_embedding_page_id = result['id']
+                    else:
+                        pass
+                
+                restaurant_response = notion_user_client.databases.query(
+                    database_id=restaurant_page_id,
+                )
+                
+                meals_response = notion_user_client.databases.query(
+                    database_id=meals_page_id,
+                )
+                
+                page_embeddings = []
+                page_ids = []
+                for page in restaurant_response["results"]:
+                    page_response = notion_user_client.pages.retrieve(page_id=page["id"])
+                    page_embedding = openai_client.text_embedding_request(page_response['propperties'])
+                    page_embeddings.append(page_embedding)
+                    page_ids.append(page_response['id'])
+                    # notion_user_client.pages.create(
+                    #     parent={ 'database_id': text_embedding_page_id },
+                    #     properties={
+                    #         'Page ID': { 'title': [{ 'type': 'text', 'text': { 'content': page_response['id'] }}] },
+                    #         'Embedding': { 'rich_text': [{ 'type': 'text', 'text': { 'content': page_embedding }}] },
+                    #     },
+                    # )
+                    
+                for page in meals_response["results"]:
+                    page_response = notion_user_client.pages.retrieve(page_id=page["id"])
+                    page_embedding = openai_client.text_embedding_request(page_response['propperties'])
+                    page_embeddings.append(page_embedding)
+                    page_ids.append(page_response['id'])
+                    
+                    # notion_user_client.pages.create(
+                    #     parent={ 'database_id': text_embedding_page_id },
+                    #     properties={
+                    #         'Page ID': { 'title': [{ 'type': 'text', 'text': { 'content': page_response['id'] }}] },
+                    #         'Embedding': { 'rich_text': [{ 'type': 'text', 'text': { 'content': page_embedding }}] },
+                    #     },
+                    # )
+                    
+                    
+                    
+                    
     if 'generated' not in st.session_state:
         st.session_state['generated'] = []
 
@@ -486,16 +563,30 @@ def omnet_rag():
         # if st.session_state['google_auth'] is None:
         #     message('please login with google first')
         # else:
+        k = 5
+        prompt_embedding = openai_client.text_embedding_request(prompt)
+        ## get top k similar embeddings from page_embeddings
+        similarities = cosine_similarity(prompt_embedding, page_embeddings)
+        # Get top k indices
+        top_k_indices = np.argsort(similarities[0])[-k:]
+        
+        contexts = []
+        for index in top_k_indices:
+            page_response_property = notion_user_client.pages.retrieve(page_id=page_ids[index])['properties']
+            page_response_property_json = json.dumps(page_response_property)
+            contexts.append(page_response_property_json)
+        contexts_str = ' '.join(contexts)
+        
         if st.session_state['chat_status'] == 'init':
             messages = []
-            messages.append({"role": "user", "content": prompt})
+            messages.append({"role": "user", "content": "Based on this information, " + contexts_str + ". " + prompt})
             response = openai_client.chat_completion_request(messages).choices[0].message
             st.session_state.past.append(prompt)
             st.session_state.generated.append(response.content)
             st.session_state['chat_status'] = 'generated'
         elif st.session_state['chat_status'] == 'generated':
             messages = []
-            messages.append({"role": "user", "content": prompt})
+            messages.append({"role": "user", "content": "Based on this information, " + contexts_str + ". " + prompt})
             response = openai_client.chat_completion_request(messages).choices[0].message
             st.session_state.past.append(prompt)
             st.session_state.generated.append(response.content)
