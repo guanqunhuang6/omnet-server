@@ -14,13 +14,13 @@ tools = [
         "type": "function",
         "function": {
             "name": "write_into_database",
-            "description": "write into the Meal schema and Restaurant schema from email data like uber eats, opentable, tock etc.",
+            "description": "write into the Meal schema and Restaurant schema from email data like uber eats, opentable, tock etc. If you can not find the exact information, you should output None in the corresponding field.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "Restaurant": {
                         "type": "string",
-                        "description": "This is the name of the restaurant",
+                        "description": "This is the name of the restaurant. Only digits, letters, spaces, and !#$%&+,./:?@'are allowed.",
                     },
                     "Time": {
                         "type": "string",
@@ -29,15 +29,36 @@ tools = [
                     "Meal Type":{
                         "type": "string",
                         "enum": ["Breakfast", "Lunch", "Dinner", "Brunch"],
-                        "description": "Breakfast, Lunch, Dinner, Brunch, etc."
+                        "description": "Breakfast, Lunch, Dinner, Brunch, etc. Judge by eating time"
                     },
-                    "Detailed Address":{
+                    # "Detailed Address":{
+                    #     "type": "string",
+                    #     "description": "This is the detailed address of the restaurant"
+                    # },
+                    "Address1":{
                         "type": "string",
-                        "description": "This is the detailed address of the restaurant"
+                        "description": "The first line of the restaurant's address. Only digits, letters, spaces, and '/#&,.: are allowed. An empty string is allowed; this will specifically match certain service businesses that have no street address."
                     },
+                    "city":{
+                        "type": "string",
+                        "description": "This is the city of the restaurant. Only digits, letters, spaces, and '.() are allowed."
+                    },
+                    "state":{
+                        "type": "string",
+                        "description": "This is the state of the restaurant.  ISO 3166-2 (with a few exceptions) "
+                    },
+                    # "country":{
+                    #     "type": "string",
+                    #     "description": "This is the country of the restaurant. ISO 3166-1 alpha-2"
+                    # },
                     "Zip Code":{
                         "type": "string",
                         "description": "This is the zip code of the restaurant"
+                    },
+                    "Method":{
+                        "type": "string",
+                        "enum": ["Delivery", "Reservation"],
+                        "description": "Delivery, Reservation, etc. Judge by the way of eating"
                     },
                 },
                 "required": ["location", "format"],

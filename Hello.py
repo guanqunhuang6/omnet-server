@@ -395,38 +395,38 @@ def import_gmail():
                             openai_response = openai_client.extract_info_from_email(content)
                             
                             openai_response_json = json.loads(openai_response.tool_calls[0].function.arguments)
-                            print(openai_response_json)
-                            public_restaurant_response = notion_private_client.databases.query(
-                                database_id=PUBLIC_RESTAURANT_DATABASE_ID,
-                                filter={
-                                    "and": [
-                                        {
-                                            "property": "Name",
-                                            "title": {
-                                                "equals": openai_response_json['Restaurant']
-                                            }
-                                        },
-                                        {
-                                            "property": "Zip Code",
-                                            "rich_text": {
-                                                "equals": openai_response_json['Zip Code']
-                                            }
-                                        }
-                                    ]
-                                }
-                            )
+
+                            # public_restaurant_response = notion_private_client.databases.query(
+                            #     database_id=PUBLIC_RESTAURANT_DATABASE_ID,
+                            #     filter={
+                            #         "and": [
+                            #             {
+                            #                 "property": "Name",
+                            #                 "title": {
+                            #                     "equals": openai_response_json['Restaurant']
+                            #                 }
+                            #             },
+                            #             {
+                            #                 "property": "Zip Code",
+                            #                 "rich_text": {
+                            #                     "equals": openai_response_json['Zip Code']
+                            #                 }
+                            #             }
+                            #         ]
+                            #     }
+                            # )
                             
-                            if len(public_restaurant_response["results"]) == 0:
-                                public_restaurant_row_response = notion_private_client.pages.create(
-                                    parent={ 'database_id': PUBLIC_RESTAURANT_DATABASE_ID },
-                                    properties={
-                                        'Name': { 'title': [{ 'type': 'text', 'text': { 'content': openai_response_json['Restaurant'] }}] },
-                                        'Zip Code':  { 'rich_text': [{ 'type': 'text', 'text': { 'content': openai_response_json['Zip Code'] }}] },
-                                    },
-                                )
-                                public_restaurant_row_page_id = public_restaurant_row_response['id']
-                            else:
-                                public_restaurant_row_page_id = public_restaurant_response["results"][0]["id"]
+                            # if len(public_restaurant_response["results"]) == 0:
+                            #     public_restaurant_row_response = notion_private_client.pages.create(
+                            #         parent={ 'database_id': PUBLIC_RESTAURANT_DATABASE_ID },
+                            #         properties={
+                            #             'Name': { 'title': [{ 'type': 'text', 'text': { 'content': openai_response_json['Restaurant'] }}] },
+                            #             'Zip Code':  { 'rich_text': [{ 'type': 'text', 'text': { 'content': openai_response_json['Zip Code'] }}] },
+                            #         },
+                            #     )
+                            #     public_restaurant_row_page_id = public_restaurant_row_response['id']
+                            # else:
+                            #     public_restaurant_row_page_id = public_restaurant_response["results"][0]["id"]
                             
                             restaurant_response = notion_user_client.databases.query(
                                 database_id=restaurant_page_id,
@@ -442,9 +442,8 @@ def import_gmail():
                                     parent={ 'database_id': restaurant_page_id },
                                     properties={
                                         'Name': { 'title': [{ 'type': 'text', 'text': { 'content': openai_response_json['Restaurant'] }}] },
-                                        'Public Profile': {
-                                            "relation": [{ "id": public_restaurant_row_page_id}],
-                                        }
+                                        'Price Range': { 'rich_text': [{ 'type': 'text', 'text': { 'content': "$$" }}] },
+                                        'Address': { 'rich_text': [{ 'type': 'text', 'text': { 'content': openai_response_json['Address1'] + ", "+ openai_response_json['city'] + ", " + openai_response_json['state'] }}] },
                                     },
                                 )
                             else:
@@ -461,6 +460,12 @@ def import_gmail():
                                         'select': { 'name': openai_response_json['Meal Type'] }
                                     },
                                     'Time': { 'date': { 'start': openai_response_json['Time'] } },
+                                    'Method': {
+                                        'select': { 'name': openai_response_json['Method'] }
+                                    },
+                                    'Source': {
+                                        'select': { 'name': 'Email' }
+                                    }
                                 },
                             )
 

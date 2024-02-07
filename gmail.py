@@ -195,6 +195,6 @@ if __name__ == '__main__':
             meta_data, content = omnet_gmail.get_content_from_id(message['id'])
             content = "'email_subject': " + meta_data['subject'] + ", 'email_content': " + content
             openai_response = openai_client.extract_info_from_email(content)
-            pdb.set_trace()
+            # pdb.set_trace()
             if key_words in meta_data['subject']:
                 pdb.set_trace()
