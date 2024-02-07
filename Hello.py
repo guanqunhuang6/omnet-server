@@ -550,6 +550,7 @@ def omnet_rag():
                     #     },
                     # )
                 st.session_state['page_embeddings'] = page_embeddings
+                st.session_state['page_ids'] = page_ids
                     
                     
                     
@@ -570,13 +571,13 @@ def omnet_rag():
         k = 5
         prompt_embedding = openai_client.text_embedding_request(prompt)
         ## get top k similar embeddings from page_embeddings
-        similarities = cosine_similarity(prompt_embedding, page_embeddings)
+        similarities = cosine_similarity(prompt_embedding, st.session_state['page_embeddings'])
         # Get top k indices
         top_k_indices = np.argsort(similarities[0])[-k:]
         
         contexts = []
         for index in top_k_indices:
-            page_response_property = notion_user_client.pages.retrieve(page_id=page_ids[index])['properties']
+            page_response_property = notion_user_client.pages.retrieve(page_id=st.session_state['page_embeddings'][index])['properties']
             page_response_property_json = json.dumps(page_response_property)
             contexts.append(page_response_property_json)
         contexts_str = ' '.join(contexts)
