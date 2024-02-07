@@ -370,6 +370,8 @@ def import_gmail():
                         }
                     }
                 )
+                
+                count = 0
                 for app_directory_result in app_directory_response["results"]:
                     transactional_email = app_directory_result["properties"]["Transactional Email"]['email']
                     key_words = app_directory_result["properties"]["Key String"]['rich_text'][0]['text']['content']
@@ -378,7 +380,8 @@ def import_gmail():
                     for message in messages:
                         meta_data, content = omnet_gmail.get_content_from_id(message['id'])
                         if key_words in meta_data['subject']:
-                            
+                            count += 1 
+                            if count >= 6: break
                             ## write into email database for user 
                             notion_user_client.pages.create(
                                 parent={ 'database_id': email_page_id },
@@ -579,7 +582,7 @@ def omnet_rag():
         
         if st.session_state['chat_status'] == 'init':
             messages = []
-            messages.append({"role": "user", "content": "Based on this information, " + contexts_str + ". " + prompt})
+            messages.append({"role": "user", "content": "Based on this information, " + contexts_str + ". " + prompt + " Please show me the fact."})
             response = openai_client.chat_completion_request(messages).choices[0].message
             st.session_state.past.append(prompt)
             st.session_state.generated.append(response.content)
