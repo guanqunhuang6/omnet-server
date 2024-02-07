@@ -554,6 +554,23 @@ def omnet_rag():
                 st.session_state['notion_user_client'] = notion_user_client
                     
                     
+    if "google_auth" in st.session_state:
+        response = notion_private_client.databases.query(
+            database_id=NOTION_USER_DATABASE_ID,
+            filter={
+                "property": "email",
+                "title": {
+                    "equals": st.session_state["google_auth"]
+                }
+            }
+        )
+        if len(response["results"]) == 0:
+            st.write("please login with google first, otherwise we will not update your notion database")
+        else:
+            notion_access_token = response["results"][0]["properties"]["notion_access_token"]["rich_text"][0]["text"]["content"]
+            notion_template_id = response["results"][0]["properties"]["notion_template_id"]["rich_text"][0]["text"]["content"]
+            notion_user_client = Client(auth=notion_access_token)                
+    
     if 'generated' not in st.session_state:
         st.session_state['generated'] = []
 
@@ -578,7 +595,7 @@ def omnet_rag():
         
         contexts = []
         for index in top_k_indices:
-            page_response_property = st.session_state['notion_user_client'].pages.retrieve(page_id=st.session_state['page_embeddings'][index])['properties']
+            page_response_property = notion_user_client.pages.retrieve(page_id=st.session_state['page_embeddings'][index])['properties']
             page_response_property_json = json.dumps(page_response_property)
             contexts.append(page_response_property_json)
         contexts_str = ' '.join(contexts)
@@ -592,7 +609,7 @@ def omnet_rag():
             st.session_state['chat_status'] = 'generated'
         elif st.session_state['chat_status'] == 'generated':
             messages = []
-            messages.append({"role": "user", "content": "Based on this information, " + contexts_str + ". " + prompt})
+            messages.append({"role": "user", "content": "Based on this information, " + contexts_str + ". " + prompt + " Please show me the fact."})
             response = openai_client.chat_completion_request(messages).choices[0].message
             st.session_state.past.append(prompt)
             st.session_state.generated.append(response.content)
