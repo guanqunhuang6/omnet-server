@@ -477,6 +477,7 @@ from streamlit_chat import message
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 def omnet_rag():
+    
     if st.button('refresh database'):
         if "google_auth" in st.session_state:
             response = notion_private_client.databases.query(
@@ -548,7 +549,7 @@ def omnet_rag():
                     #         'Embedding': { 'rich_text': [{ 'type': 'text', 'text': { 'content': page_embedding }}] },
                     #     },
                     # )
-                    
+                st.session_state['page_embeddings'] = page_embeddings
                     
                     
                     
