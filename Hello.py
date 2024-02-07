@@ -595,7 +595,7 @@ def omnet_rag():
         
         contexts = []
         for index in top_k_indices:
-            page_response_property = notion_user_client.pages.retrieve(page_id=st.session_state['page_embeddings'][index])['properties']
+            page_response_property = notion_user_client.pages.retrieve(page_id=st.session_state['page_ids'][index])['properties']
             page_response_property_json = json.dumps(page_response_property)
             contexts.append(page_response_property_json)
         contexts_str = ' '.join(contexts)
