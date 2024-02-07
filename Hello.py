@@ -551,7 +551,7 @@ def omnet_rag():
                     # )
                 st.session_state['page_embeddings'] = page_embeddings
                 st.session_state['page_ids'] = page_ids
-                    
+                st.session_state['notion_user_client'] = notion_user_client
                     
                     
     if 'generated' not in st.session_state:
@@ -578,7 +578,7 @@ def omnet_rag():
         
         contexts = []
         for index in top_k_indices:
-            page_response_property = notion_user_client.pages.retrieve(page_id=st.session_state['page_embeddings'][index])['properties']
+            page_response_property = st.session_state['notion_user_client'].pages.retrieve(page_id=st.session_state['page_embeddings'][index])['properties']
             page_response_property_json = json.dumps(page_response_property)
             contexts.append(page_response_property_json)
         contexts_str = ' '.join(contexts)
