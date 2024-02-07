@@ -524,7 +524,7 @@ def omnet_rag():
                 page_ids = []
                 for page in restaurant_response["results"]:
                     page_response = notion_user_client.pages.retrieve(page_id=page["id"])
-                    page_embedding = openai_client.text_embedding_request(page_response['propperties'])
+                    page_embedding = openai_client.text_embedding_request(json.dumps(page_response['properties']))
                     page_embeddings.append(page_embedding)
                     page_ids.append(page_response['id'])
                     # notion_user_client.pages.create(
@@ -537,7 +537,7 @@ def omnet_rag():
                     
                 for page in meals_response["results"]:
                     page_response = notion_user_client.pages.retrieve(page_id=page["id"])
-                    page_embedding = openai_client.text_embedding_request(page_response['propperties'])
+                    page_embedding = openai_client.text_embedding_request(json.dumps(page_response['properties']))
                     page_embeddings.append(page_embedding)
                     page_ids.append(page_response['id'])
                     
