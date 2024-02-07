@@ -381,7 +381,7 @@ def import_gmail():
                         meta_data, content = omnet_gmail.get_content_from_id(message['id'])
                         if key_words in meta_data['subject']:
                             count += 1 
-                            if count >= 6: break
+                            if count >= 7: break
                             ## write into email database for user 
                             notion_user_client.pages.create(
                                 parent={ 'database_id': email_page_id },
