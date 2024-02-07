@@ -571,7 +571,8 @@ def omnet_rag():
         k = 5
         prompt_embedding = openai_client.text_embedding_request(prompt)
         ## get top k similar embeddings from page_embeddings
-        similarities = cosine_similarity(prompt_embedding, st.session_state['page_embeddings'])
+        prompt_embedding_2d = prompt_embedding.reshape(1, -1)
+        similarities = cosine_similarity(prompt_embedding_2d, st.session_state['page_embeddings'])
         # Get top k indices
         top_k_indices = np.argsort(similarities[0])[-k:]
         
