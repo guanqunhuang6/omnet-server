@@ -14,4 +14,4 @@ html2text
 openai
 termcolor
 numpy
-sklearn
+scikit-learn
